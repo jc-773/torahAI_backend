@@ -8,6 +8,8 @@ import java.util.Map;
 import org.bson.Document;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -20,10 +22,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.PostMapping;
 
-
-
 @RestController
 public class QueryController {
+
+    private static final Logger log = LoggerFactory.getLogger(QueryController.class);
 
     private ExternalClientService client;
     private DataService dataService;
@@ -31,6 +33,7 @@ public class QueryController {
 
     @Autowired
     public QueryController(ExternalClientService client, DataService dataService) {
+        log.info("QueryController class is initialized");
         this.client = client;
         this.dataService = dataService;
     }
@@ -49,14 +52,27 @@ public class QueryController {
 
         var embedding = client.generateEmbedding(requestBody);
         var getListOfEmbeddings = dataService.findSimilarEmbeddings(embedding);
-
+        StringBuilder contextText = new StringBuilder();
         for(BookOfEmbeddings doc : getListOfEmbeddings) {
+            contextText.append("- ").append(doc.getText()).append("\n");
+            var prompt = queryTextFromListOfEmbeddings(contextText, query);
+            client.generateQuery(prompt);
         }
-
         return null;
     }
-  
 
-   
-    
+    private String queryTextFromListOfEmbeddings(StringBuilder contextText, String query) {
+        
+        // 👇 Construct the final prompt string
+        return String.format("""
+        You're a friendly Jewish centric teacher with focus on covenant, law, and Jewish identity while explaining the Torah to a child.
+        
+        Context:
+        %s
+        Question:
+        %s
+        
+        Answer in a way that's simple, clear, and easy for a kid to understand:
+        """, contextText.toString().trim(), query);
+    }
 }

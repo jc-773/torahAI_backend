@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.torah.torahAI.data.documents.BookOfEmbeddings;
 
 @Service
 public class ExternalClientService {
