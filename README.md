@@ -17,9 +17,10 @@ I hit this endpoint, line by line book by book, then stored the result in a Mong
 
 Once stored, I created a search index doc on the collection
 
-...
 
 ## How it works
+
+(You will need an OpenAI API key)
 
 I have one POST controller/endpoint named "query"
 
