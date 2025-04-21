@@ -48,7 +48,7 @@ public class QueryController {
         var prompt = queryTextFromListOfEmbeddings(contextText, query);
 
         //send prompt to openAI and return the response
-        return client.generateQuery(prompt);
+        return client.generateQuery(prompt); 
     }
 
     private String queryTextFromListOfEmbeddings(StringBuilder contextText, String query) {

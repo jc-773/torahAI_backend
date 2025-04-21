@@ -28,8 +28,8 @@ public class ExternalClientService {
 
     private final String EMBEDDING_URL = "https://api.openai.com/v1/embeddings";
     private final String PROMPT_URL = "https://api.openai.com/v1/chat/completions";
-    @Value("${openai.api.key}")
-    private String OPENAI_API_KEY;
+    // @Value("${openai.api.key}")
+     private String OPENAI_API_KEY;
 
     @Autowired
     private RestTemplate restTemplate;
