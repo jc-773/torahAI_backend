@@ -13,7 +13,7 @@ This is a RAG application - I did not train a model or anything
 
 There is a good web service resource for receiving Jewish text (https://developers.sefaria.org/reference/getting-started)
 
-I hit this endpoint, line by line book by book, then stored the result in a MongoDB Atlas collection
+I hit the texts endpoint sefaria has, line by line book by book, then stored the result in a MongoDB Atlas collection
 
 Once stored, I created a search index doc on the collection
 
