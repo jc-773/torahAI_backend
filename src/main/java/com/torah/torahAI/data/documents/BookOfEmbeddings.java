@@ -6,12 +6,12 @@ import org.bson.types.ObjectId;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-@Document("genesis_embeddings")
+@Document(collection = "book_of_embeddings")
 public class BookOfEmbeddings {
     @Id
     private ObjectId id;
     private String text;
-    private List<Long> embedding;
+    private List<Float> embedding;
     private String source;
 
     public ObjectId getId() {
@@ -26,10 +26,10 @@ public class BookOfEmbeddings {
     public void setText(String text) {
         this.text = text;
     }
-    public List<Long> getEmbedding() {
+    public List<Float> getEmbedding() {
         return embedding;
     }
-    public void setEmbedding(List<Long> embedding) {
+    public void setEmbedding(List<Float> embedding) {
         this.embedding = embedding;
     }
     public String getSource() {
