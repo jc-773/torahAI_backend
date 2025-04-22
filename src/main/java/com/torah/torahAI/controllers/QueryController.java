@@ -23,6 +23,8 @@ public class QueryController {
     private DataService dataService;
     JSONArray messages = new JSONArray();
 
+    String token = System.getenv("$OPENAI_API_KEY");
+
     @Autowired
     public QueryController(ExternalClientService client, DataService dataService) {
         log.info("QueryController class is initialized");
