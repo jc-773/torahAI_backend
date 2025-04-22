@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,7 +29,8 @@ public class ExternalClientService {
 
     private final String EMBEDDING_URL = "https://api.openai.com/v1/embeddings";
     private final String PROMPT_URL = "https://api.openai.com/v1/chat/completions";
-     private String OPENAI_API_KEY;
+    private final String OPENAI_API_KEY = Optional.ofNullable(System.getenv("OPENAI_API_KEY"))
+    .orElseThrow(() -> new IllegalStateException("Missing OPENAI_API_KEY environment variable"));
 
     @Autowired
     private RestTemplate restTemplate;
