@@ -28,4 +28,22 @@ public class Utils {
         }
         return null;
     }
+
+    public static String mapImageResponse(ResponseEntity<String> response) {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            System.out.println("response body: " + response.getBody());
+            JsonNode root = mapper.readTree(response.getBody());
+    
+             JsonNode contentNode = root
+            .path("data")
+            .get(0)           // get first object in the array
+            .path("url");   
+
+        return contentNode.asText().trim();
+        } catch (Exception e) {
+            log.error("oops... having trouble mapping the response", e);
+        }
+        return null;
+    }
 }
