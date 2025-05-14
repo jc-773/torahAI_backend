@@ -11,8 +11,10 @@ import org.springframework.web.bind.annotation.RestController;
 import com.torah.torahAI.data.DataService;
 import com.torah.torahAI.data.documents.BookOfEmbeddings;
 import com.torah.torahAI.external.ExternalClientService;
+import com.torah.torahAI.responses.QueryWithImageResponse;
 
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.PostMapping;
 
 @RestController
@@ -33,13 +35,17 @@ public class QueryController {
     }
     
     @PostMapping("/query")
-    public String query(@RequestBody String query) {
+    public QueryWithImageResponse query(@RequestBody String query, @RequestParam String role) {
+        QueryWithImageResponse responseObject = new QueryWithImageResponse();
 
+        //TODO: Why?
         client.getAllBooks();
 
+        //TODO: Blocking call
         //generate embeddings for semantic meaning of the query
         var embedding = client.generateEmbedding(query);
 
+        //TODO: Blocking call
         //takes those embeddings and do a vector search in a mongoDB ATLAS
         var getListOfEmbeddings = dataService.findSimilarEmbeddings(embedding);
         StringBuilder contextText = new StringBuilder();
@@ -51,8 +57,12 @@ public class QueryController {
         //generate prompt for openAI
         var prompt = queryTextFromListOfEmbeddings(contextText, query);
 
+        //TODO: Both blocking calls
+        responseObject.queryResponse = client.generateQuery(prompt, role);
+        responseObject.imageResponse = client.generateImageQuery(prompt);
+
         //send prompt to openAI and return the response
-        return client.generateQuery(prompt); 
+        return responseObject;
     }
 
     private String queryTextFromListOfEmbeddings(StringBuilder contextText, String query) {
