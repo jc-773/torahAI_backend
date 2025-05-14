@@ -5,11 +5,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.Executors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -18,8 +18,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.torah.torahAI.Utils;
 import com.torah.torahAI.data.documents.EmbeddingResponse;
 
 @Service
@@ -29,6 +28,7 @@ public class ExternalClientService {
 
     private final String EMBEDDING_URL = "https://api.openai.com/v1/embeddings";
     private final String PROMPT_URL = "https://api.openai.com/v1/chat/completions";
+    private static final String BOOK_URL_PARAMTERIZED = "https://www.sefaria.org/api/texts/%s.1?lang=english";
     private final String OPENAI_API_KEY = Optional.ofNullable(System.getenv("OPENAI_API_KEY"))
     .orElseThrow(() -> new IllegalStateException("Missing OPENAI_API_KEY environment variable"));
 
@@ -63,7 +63,7 @@ public class ExternalClientService {
         
         var response = restTemplate.exchange(PROMPT_URL, HttpMethod.POST, entity, String.class);
        
-        return mappedResponse(response);
+        return Utils.mapResponse(response);
     }
 
     private  Map<String, Object> buildRequestBody(String query) {
@@ -72,18 +72,6 @@ public class ExternalClientService {
             "input",query,
             "encoding_format", "float"
         );
-    }
-
-    private String mappedResponse(ResponseEntity<String> response) {
-        try {
-            ObjectMapper mapper = new ObjectMapper();
-            System.out.println("response body: " + response.getBody());
-            JsonNode root = mapper.readTree(response.getBody());
-            return root.path("choices").get(0).path("message").path("content").asText();
-        } catch (Exception e) {
-            log.error("oops... having trouble mapping the response", e);
-        }
-       return null;
     }
 
     private Map<String, Object> buildQuery(String query) {
@@ -103,5 +91,30 @@ public class ExternalClientService {
         requestBody.put("max_tokens", 100);
 
       return requestBody;
+    }
+
+    public String getAllBooks() {
+        List<String> listOfBooks = new ArrayList<>();
+        listOfBooks.add("Genesis");
+        listOfBooks.add("Exodus");
+        listOfBooks.add("Leviticus");
+        listOfBooks.add("Numbers");
+        listOfBooks.add("Deuteronomy");
+
+        int i = 0;
+        while(i < listOfBooks.size()) {
+            try(var executor = Executors.newVirtualThreadPerTaskExecutor()) {
+                String book = listOfBooks.get(i);
+                String url = String.format(BOOK_URL_PARAMTERIZED, book);
+                executor.submit(() -> {
+                var response = restTemplate.exchange(url,HttpMethod.GET,HttpEntity.EMPTY,String.class);
+                String filteredResponse = Utils.mapResponse(response);
+                log.info("response: {}", filteredResponse);
+                return Utils.mapResponse(response);
+                });
+            }
+            i++;
+        }
+        return null;
     }
 }
