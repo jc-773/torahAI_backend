@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.torah.torahAI.data.DataService;
 import com.torah.torahAI.data.documents.BookOfEmbeddings;
 import com.torah.torahAI.external.ExternalClientService;
+
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.PostMapping;
 
@@ -23,7 +24,6 @@ public class QueryController {
     private DataService dataService;
     JSONArray messages = new JSONArray();
 
-    String token = System.getenv("$OPENAI_API_KEY");
 
     @Autowired
     public QueryController(ExternalClientService client, DataService dataService) {
@@ -34,6 +34,8 @@ public class QueryController {
     
     @PostMapping("/query")
     public String query(@RequestBody String query) {
+
+        client.getAllBooks();
 
         //generate embeddings for semantic meaning of the query
         var embedding = client.generateEmbedding(query);
