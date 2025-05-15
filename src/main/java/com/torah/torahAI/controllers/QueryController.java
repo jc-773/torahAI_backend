@@ -1,25 +1,19 @@
 package com.torah.torahAI.controllers;
 
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
-import org.json.JSONArray;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.torah.torahAI.Utils;
 import com.torah.torahAI.data.DataService;
 import com.torah.torahAI.data.documents.BookOfEmbeddings;
 import com.torah.torahAI.data.documents.EmbeddingResponse;
 import com.torah.torahAI.external.ExternalClientService;
-import com.torah.torahAI.responses.QueryWithImageResponse;
 
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -27,27 +21,21 @@ import org.springframework.web.bind.annotation.PostMapping;
 
 @RestController
 public class QueryController {
-
     private static final Logger log = LoggerFactory.getLogger(QueryController.class);
 
-    private ExternalClientService client;
-    private DataService dataService;
     @Autowired
     private ExecutorService virtualExecutor;
-    JSONArray messages = new JSONArray();
-
+    private ExternalClientService client;
+    private DataService dataService;
 
     @Autowired
     public QueryController(ExternalClientService client, DataService dataService) {
-        log.info("QueryController class is initialized");
         this.client = client;
         this.dataService = dataService;
     }
     
     @PostMapping("/query")
     public String query(@RequestBody String query, @RequestParam String role) throws InterruptedException, ExecutionException {
-        var start = System.currentTimeMillis();
-        //generate embeddings for semantic meaning of the query]
         CompletableFuture<EmbeddingResponse> futureEmbedding = CompletableFuture.supplyAsync(() -> {
             return  client.generateEmbedding(query);
         });
@@ -63,8 +51,6 @@ public class QueryController {
              return client.generateQuery(prompt, role);
         });
         var response = futureQuery.get();
-        var end = System.currentTimeMillis();
-        log.info("time: {}", end - start);
         return response;
     }
 

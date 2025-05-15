@@ -1,8 +1,6 @@
 package com.torah.torahAI.data;
 
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 
 import org.bson.Document;
 import org.springframework.beans.factory.annotation.Autowired;
