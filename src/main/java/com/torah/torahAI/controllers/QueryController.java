@@ -1,6 +1,12 @@
 package com.torah.torahAI.controllers;
 
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import org.json.JSONArray;
 import org.slf4j.Logger;
@@ -8,8 +14,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.torah.torahAI.Utils;
 import com.torah.torahAI.data.DataService;
 import com.torah.torahAI.data.documents.BookOfEmbeddings;
+import com.torah.torahAI.data.documents.EmbeddingResponse;
 import com.torah.torahAI.external.ExternalClientService;
 import com.torah.torahAI.responses.QueryWithImageResponse;
 
@@ -24,6 +32,8 @@ public class QueryController {
 
     private ExternalClientService client;
     private DataService dataService;
+    @Autowired
+    private ExecutorService virtualExecutor;
     JSONArray messages = new JSONArray();
 
 
@@ -35,34 +45,39 @@ public class QueryController {
     }
     
     @PostMapping("/query")
-    public QueryWithImageResponse query(@RequestBody String query, @RequestParam String role) {
-        QueryWithImageResponse responseObject = new QueryWithImageResponse();
-
-        //TODO: Why?
-        client.getAllBooks();
-
-        //TODO: Blocking call
-        //generate embeddings for semantic meaning of the query
-        var embedding = client.generateEmbedding(query);
-
-        //TODO: Blocking call
-        //takes those embeddings and do a vector search in a mongoDB ATLAS
-        var getListOfEmbeddings = dataService.findSimilarEmbeddings(embedding);
-        StringBuilder contextText = new StringBuilder();
-
-        //append what is found
-        for(BookOfEmbeddings doc : getListOfEmbeddings) {
-            contextText.append("- ").append(doc.getText()).append("\n");
-        }
-        //generate prompt for openAI
+    public String query(@RequestBody String query, @RequestParam String role) throws InterruptedException, ExecutionException {
+        //generate embeddings for semantic meaning of the query]
+        CompletableFuture<EmbeddingResponse> futureEmbedding = CompletableFuture.supplyAsync(() -> {
+            return  client.generateEmbedding(query);
+        });
+        var embedding = futureEmbedding.get();
+        CompletableFuture<List<BookOfEmbeddings>> futureVectorSearch = CompletableFuture.supplyAsync(() -> {
+                return dataService.findSimilarEmbeddings(embedding);
+        }, virtualExecutor);
+        var results = futureVectorSearch.get();
+        var contextText = appendText(results);
         var prompt = queryTextFromListOfEmbeddings(contextText, query);
 
-        //TODO: Both blocking calls
-        responseObject.queryResponse = client.generateQuery(prompt, role);
-        responseObject.imageResponse = client.generateImageQuery(prompt);
+        CompletableFuture<String> futureQuery = CompletableFuture.supplyAsync(() -> {
+             return client.generateQuery(prompt, role);
+        });
+        return futureQuery.get();
+    }
 
-        //send prompt to openAI and return the response
-        return responseObject;
+    @PostMapping(value = "/query/image")
+    public String queryImage(@RequestBody String prompt, @RequestParam String role) throws InterruptedException, ExecutionException {
+        CompletableFuture<String> futureImage = CompletableFuture.supplyAsync(() -> {
+             return client.generateImageQuery(prompt);
+        });
+        return futureImage.get();
+    }
+
+    private StringBuilder appendText(List<BookOfEmbeddings> futureEmbedding) {
+        StringBuilder contextText = new StringBuilder();
+        for(BookOfEmbeddings doc : futureEmbedding) {
+            contextText.append("- ").append(doc.getText()).append("\n");
+        }
+        return contextText;
     }
 
     private String queryTextFromListOfEmbeddings(StringBuilder contextText, String query) {

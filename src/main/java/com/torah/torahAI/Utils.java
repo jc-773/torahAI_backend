@@ -10,6 +10,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public class Utils {
     private static Logger log = LoggerFactory.getLogger(Utils.class);
 
+    public static long timer(Runnable run) {
+        var start = System.currentTimeMillis();
+        run.run();
+        var end = System.currentTimeMillis();
+        return end - start;
+    }
+
     public static String mapResponse(ResponseEntity<String> response) {
         try {
             ObjectMapper mapper = new ObjectMapper();

@@ -68,14 +68,15 @@ public class ExternalClientService {
         return Utils.mapResponse(response);
     }
 
-  public String generateImageQuery(String query) {
+  public String generateImageQuery(String prompt) {
+
     HttpHeaders headers = new HttpHeaders();
     headers.setContentType(MediaType.APPLICATION_JSON);
     headers.setBearerAuth(OPENAI_API_KEY);
 
     Map<String, Object> requestBody = new HashMap<>();
     requestBody.put("model", "dall-e-3");
-    requestBody.put("prompt", "Alright, let me tell you a wonderful story from the Book of Genesis. It all started when God created the world. Imagine a dark, empty place, with water everywhere and no light. But then, God's spirit moved over the water, bringing life and light into the world.");
+    requestBody.put("prompt", prompt);
     requestBody.put("size", "1024x1024");
      //requestBody.put("n", "2");
     requestBody.put("quality", "standard");
@@ -94,6 +95,8 @@ public class ExternalClientService {
         log.error("OpenAI API error: {}", e.getResponseBodyAsString());
         return "Image generation failed: " + e.getStatusCode();
     }
+
+
 }
 
     private  Map<String, Object> buildRequestBody(String query) {
