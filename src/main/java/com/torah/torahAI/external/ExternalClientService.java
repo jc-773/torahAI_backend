@@ -76,7 +76,7 @@ public class ExternalClientService {
 
     Map<String, Object> requestBody = new HashMap<>();
     requestBody.put("model", "dall-e-3");
-    requestBody.put("prompt", prompt);
+    requestBody.put("prompt", "generate a kid-friendly torah centric image for a user wanting to know: " + prompt);
     requestBody.put("size", "1024x1024");
      //requestBody.put("n", "2");
     requestBody.put("quality", "standard");

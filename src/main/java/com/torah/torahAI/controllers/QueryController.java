@@ -46,6 +46,7 @@ public class QueryController {
     
     @PostMapping("/query")
     public String query(@RequestBody String query, @RequestParam String role) throws InterruptedException, ExecutionException {
+        var start = System.currentTimeMillis();
         //generate embeddings for semantic meaning of the query]
         CompletableFuture<EmbeddingResponse> futureEmbedding = CompletableFuture.supplyAsync(() -> {
             return  client.generateEmbedding(query);
@@ -61,7 +62,10 @@ public class QueryController {
         CompletableFuture<String> futureQuery = CompletableFuture.supplyAsync(() -> {
              return client.generateQuery(prompt, role);
         });
-        return futureQuery.get();
+        var response = futureQuery.get();
+        var end = System.currentTimeMillis();
+        log.info("time: {}", end - start);
+        return response;
     }
 
     @PostMapping(value = "/query/image")
