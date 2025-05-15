@@ -1,12 +1,13 @@
 package com.torah.torahAI;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.web.client.RestTemplate;
-
-import com.torah.torahAI.external.ExternalClientService;
 
 @SpringBootApplication
 public class TorahAiApplication {
@@ -15,6 +16,11 @@ public class TorahAiApplication {
     public RestTemplate restTemplate() {
         return new RestTemplate();
     }
+
+	@Bean
+	public ExecutorService virtualExecutor() {
+		return Executors.newVirtualThreadPerTaskExecutor();
+	}
 
 	public static void main(String[] args) {
 		SpringApplication.run(TorahAiApplication.class, args);
