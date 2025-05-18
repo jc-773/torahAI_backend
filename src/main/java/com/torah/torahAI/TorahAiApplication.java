@@ -17,6 +17,11 @@ public class TorahAiApplication {
         return new RestTemplate();
     }
 
+	@Bean 
+	public ExecutorService executorService() {
+		return Executors.newVirtualThreadPerTaskExecutor();
+	}
+
 	public static void main(String[] args) {
 		SpringApplication.run(TorahAiApplication.class, args);
 	}

@@ -4,23 +4,18 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
-import java.util.concurrent.Executors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.reactive.function.client.WebClient;
 
-import com.torah.torahAI.Utils;
 import com.torah.torahAI.data.documents.EmbeddingResponse;
+
+import reactor.core.publisher.Mono;
 
 @Service
 public class ExternalClientService {
@@ -29,74 +24,44 @@ public class ExternalClientService {
 
     private final String EMBEDDING_URL = "https://api.openai.com/v1/embeddings";
     private final String PROMPT_URL = "https://api.openai.com/v1/chat/completions";
-    private final String BOOK_URL_PARAMTERIZED = "https://www.sefaria.org/api/texts/%s.1?lang=english";
     private final String IMAGE_GENERATION_URL = "https://api.openai.com/v1/images/generations";
-    private final String OPENAI_API_KEY = Optional.ofNullable(System.getenv("OPENAI_API_KEY"))
-    .orElseThrow(() -> new IllegalStateException("Missing OPENAI_API_KEY environment variable"));
-
-    @Autowired
-    private RestTemplate restTemplate;
+    
+    private WebClient client;
 
     @Autowired
     public ExternalClientService(RestTemplate restTemplate) {
-        this.restTemplate = restTemplate;
+        this.client = WebClient.builder().build();
     }
 
-    public EmbeddingResponse generateEmbedding(String query) {
-        var requestBody = buildRequestBody(query);
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.set("Authorization", "Bearer " + OPENAI_API_KEY);
-        HttpEntity<Map<String,Object>> entity = new HttpEntity<>(requestBody, headers);
-        var response = restTemplate.exchange(EMBEDDING_URL, HttpMethod.POST, entity, EmbeddingResponse.class);
-        if(response.hasBody()) {
-            return response.getBody();
-        } else {
-            return null;
-        }
+    public Mono<EmbeddingResponse> generateEmbedding(String query, String Auth) {
+        return client.post().uri(EMBEDDING_URL).headers(headers -> {
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.setBearerAuth(Auth);
+        })
+        .bodyValue(buildRequestBody(query))
+        .retrieve()
+        .bodyToMono(EmbeddingResponse.class);
     }
 
-    public String generateQuery(String query, String role) {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.set("Authorization", "Bearer " + OPENAI_API_KEY);
-        var requestBody = buildQuery(query, role);
-        HttpEntity<Map<String,Object>> entity = new HttpEntity<>(requestBody, headers);
-        
-        var response = restTemplate.exchange(PROMPT_URL, HttpMethod.POST, entity, String.class);
-       
-        return Utils.mapResponse(response);
+    public Mono<String> generateQuery(String query, String role, String Auth) {
+        return client.post().uri(PROMPT_URL).headers(headers -> {
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.setBearerAuth(Auth);
+        })
+        .bodyValue(buildQueryRequest(query, role))
+        .retrieve()
+        .bodyToMono(String.class);
     }
 
-  public String generateImageQuery(String prompt) {
-
-    HttpHeaders headers = new HttpHeaders();
-    headers.setContentType(MediaType.APPLICATION_JSON);
-    headers.setBearerAuth(OPENAI_API_KEY);
-
-    Map<String, Object> requestBody = new HashMap<>();
-    requestBody.put("model", "dall-e-3");
-    requestBody.put("prompt", "Create a kid-friendly, cartoon-style image featuring Jewish cultural or Torah-inspired elements. All characters should have brown skin tones. Base the image on the following prompt:" + prompt);
-    requestBody.put("size", "1024x1024");
-     //requestBody.put("n", "2");
-    requestBody.put("quality", "standard");
-
-    HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
-
-    try {
-        ResponseEntity<String> response = restTemplate.exchange(
-            IMAGE_GENERATION_URL,
-            HttpMethod.POST,
-            entity,
-            String.class
-        );
-        return Utils.mapImageResponse(response);
-    } catch (HttpStatusCodeException e) {
-        log.error("OpenAI API error: {}", e.getResponseBodyAsString());
-        return "Image generation failed: " + e.getStatusCode();
-    }
-
-
+  public Mono<String> generateImageQuery(String prompt, String Auth) {
+    return client.post().uri(IMAGE_GENERATION_URL).headers(headers -> {
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.setBearerAuth(Auth);
+        })
+        .bodyValue(buildImageQueryRequest(prompt))
+        .retrieve()
+        .bodyToMono(String.class);
+    
 }
 
     private  Map<String, Object> buildRequestBody(String query) {
@@ -107,7 +72,7 @@ public class ExternalClientService {
         );
     }
 
-    private Map<String, Object> buildQuery(String query, String role) {
+    private Map<String, Object> buildQueryRequest(String query, String role) {
         List<Map<String, String>> messages = new ArrayList<>();
         String content = "";
         if(role.equalsIgnoreCase("kid-friendly")) {
@@ -135,28 +100,15 @@ public class ExternalClientService {
       return requestBody;
     }
 
-    public String getAllBooks() {
-        List<String> listOfBooks = new ArrayList<>();
-        listOfBooks.add("Genesis");
-        listOfBooks.add("Exodus");
-        listOfBooks.add("Leviticus");
-        listOfBooks.add("Numbers");
-        listOfBooks.add("Deuteronomy");
-
-        int i = 0;
-        while(i < listOfBooks.size()) {
-            try(var executor = Executors.newVirtualThreadPerTaskExecutor()) {
-                String book = listOfBooks.get(i);
-                String url = String.format(BOOK_URL_PARAMTERIZED, book);
-                executor.submit(() -> {
-                var response = restTemplate.exchange(url,HttpMethod.GET,HttpEntity.EMPTY,String.class);
-                String filteredResponse = Utils.mapResponse(response);
-                log.info("response: {}", filteredResponse);
-                return Utils.mapResponse(response);
-                });
-            }
-            i++;
-        }
-        return null;
+    private Map<String, Object> buildImageQueryRequest(String prompt) {
+         Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("model", "dall-e-3");
+        requestBody.put("prompt", "Create a kid-friendly, cartoon-style image featuring Jewish cultural or Torah-inspired elements. All characters should have brown skin tones. Base the image on the following prompt:" + prompt);
+        requestBody.put("size", "1024x1024");
+        //requestBody.put("n", "2");
+        requestBody.put("quality", "standard");
+        return requestBody;
     }
+
+   
 }
