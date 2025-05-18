@@ -4,7 +4,6 @@ import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.ResponseEntity;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -20,11 +19,11 @@ public class Utils {
         return end - start;
     }
 
-    public static String mapResponse(ResponseEntity<String> response) {
+    public static String mapResponse(String response) {
         try {
             ObjectMapper mapper = new ObjectMapper();
-            System.out.println("response body: " + response.getBody());
-            JsonNode root = mapper.readTree(response.getBody());
+            System.out.println("response body: " + response);
+            JsonNode root = mapper.readTree(response);
     
              JsonNode contentNode = root
             .path("choices")
@@ -39,11 +38,11 @@ public class Utils {
         return null;
     }
 
-    public static String mapImageResponse(ResponseEntity<String> response) {
+    public static String mapImageResponse(String response) {
         try {
             ObjectMapper mapper = new ObjectMapper();
-            System.out.println("response body: " + response.getBody());
-            JsonNode root = mapper.readTree(response.getBody());
+            System.out.println("response body: " + response);
+            JsonNode root = mapper.readTree(response);
     
              JsonNode contentNode = root
             .path("data")

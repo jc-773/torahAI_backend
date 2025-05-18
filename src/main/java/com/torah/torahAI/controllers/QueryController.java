@@ -1,6 +1,7 @@
 package com.torah.torahAI.controllers;
 
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import org.slf4j.Logger;
@@ -16,13 +17,17 @@ import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.PostMapping;
+
 
 @RestController
 public class QueryController {
     private static final Logger log = LoggerFactory.getLogger(QueryController.class);
 
+    @Autowired
+    private ExecutorService virtualExecutor;
     private ExternalClientService client;
     private DataService dataService;
 
@@ -33,22 +38,20 @@ public class QueryController {
     }
     
     @PostMapping("/query") //if the I/O call can invoke an exception, then run it with fromCallable on its own virtual thread
-    public Mono<String> query(@RequestBody String query, @RequestParam String role) { 
-        return Mono.fromCallable(() -> client.generateEmbedding(query)) 
-        .subscribeOn(Schedulers.fromExecutor(Executors.newVirtualThreadPerTaskExecutor()))
-        .flatMap(embeddings -> 
-                    Mono.fromCallable(() -> dataService.findSimilarEmbeddings(embeddings))
-                    .subscribeOn(Schedulers.fromExecutor(Executors.newVirtualThreadPerTaskExecutor()))
-        .map(results -> Utils.appendText(results))
+    public Mono<String> query(@RequestBody String query, @RequestParam String role, @RequestHeader("Authorization") String Auth) { 
+        return Mono.fromCallable(() -> client.generateEmbedding(query,Auth))
+        .subscribeOn(Schedulers.fromExecutor(virtualExecutor))
+        .flatMap(embedding -> dataService.findSimilarEmbeddings(embedding))
+        .map(Utils::appendText)
         .map(context -> Utils.setContextForPrompt(context, query))
-        .flatMap(prompt -> 
-                    Mono.fromCallable(() -> client.generateQuery(prompt, role)))
-                    .subscribeOn(Schedulers.fromExecutor(Executors.newVirtualThreadPerTaskExecutor())));
+        .flatMap(prompt -> client.generateQuery(prompt, role,Auth))
+        .map(Utils:: mapResponse);
     }
 
     @PostMapping(value = "/query/image")
-    public Mono<String> queryImage(@RequestBody String prompt, @RequestParam String role) throws InterruptedException, ExecutionException { 
-        return Mono.fromCallable(() -> client.generateImageQuery(prompt))
-            .subscribeOn(Schedulers.fromExecutor(Executors.newVirtualThreadPerTaskExecutor()));
+    public Mono<String> queryImage(@RequestBody String prompt, @RequestParam String role, @RequestHeader("Authorization") String Auth) throws InterruptedException, ExecutionException { 
+       return client.generateImageQuery(prompt, Auth)
+        .map(Utils::mapImageResponse)
+        .subscribeOn(Schedulers.fromExecutor(virtualExecutor));
     }
 }
