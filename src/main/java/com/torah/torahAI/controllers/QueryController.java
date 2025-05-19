@@ -42,16 +42,18 @@ public class QueryController {
         return Mono.fromCallable(() -> client.generateEmbedding(query,Auth))
         .subscribeOn(Schedulers.fromExecutor(virtualExecutor))
         .flatMap(embedding -> dataService.findSimilarEmbeddings(embedding))
+        .subscribeOn(Schedulers.fromExecutor(virtualExecutor))
         .map(Utils::appendText)
         .map(context -> Utils.setContextForPrompt(context, query))
         .flatMap(prompt -> client.generateQuery(prompt, role,Auth))
+        .subscribeOn(Schedulers.fromExecutor(virtualExecutor))
         .map(Utils:: mapResponse);
     }
 
     @PostMapping(value = "/query/image")
     public Mono<String> queryImage(@RequestBody String prompt, @RequestParam String role, @RequestHeader("Authorization") String Auth) throws InterruptedException, ExecutionException { 
        return client.generateImageQuery(prompt, Auth)
-        .map(Utils::mapImageResponse)
-        .subscribeOn(Schedulers.fromExecutor(virtualExecutor));
+        .subscribeOn(Schedulers.fromExecutor(virtualExecutor))
+        .map(Utils::mapImageResponse);
     }
 }

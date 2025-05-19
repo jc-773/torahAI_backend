@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    container_name: torahai-app
+    ports:
+      - "8080:8080"
+    secrets:
+      - mongo_uri
+    entrypoint: >
+      sh -c 'export SPRING_DATA_MONGODB_URI=$(cat /run/secrets/mongo_uri) && java -jar app.jar'
+
+secrets:
+  mongo_uri:
+    file: ./secrets/mongo_uri.secret
+
+volumes:
+  mongo_data:
