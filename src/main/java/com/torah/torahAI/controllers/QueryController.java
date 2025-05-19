@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.torah.torahAI.Utils;
 import com.torah.torahAI.data.DataService;
+import com.torah.torahAI.data.documents.EmbeddingResponse;
 import com.torah.torahAI.external.ExternalClientService;
 
 import reactor.core.publisher.Mono;
@@ -18,16 +19,18 @@ import reactor.core.scheduler.Schedulers;
 
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.PostMapping;
 
 
 @RestController
+@RequestMapping
 public class QueryController {
     private static final Logger log = LoggerFactory.getLogger(QueryController.class);
-
+   
     @Autowired
-    private ExecutorService virtualExecutor;
+    public ExecutorService virtualExecutor;
     private ExternalClientService client;
     private DataService dataService;
 
@@ -36,18 +39,20 @@ public class QueryController {
         this.client = client;
         this.dataService = dataService;
     }
-    
-    @PostMapping("/query") //if the I/O call can invoke an exception, then run it with fromCallable on its own virtual thread
-    public Mono<String> query(@RequestBody String query, @RequestParam String role, @RequestHeader("Authorization") String Auth) { 
-        return Mono.fromCallable(() -> client.generateEmbedding(query,Auth))
-        .subscribeOn(Schedulers.fromExecutor(virtualExecutor))
-        .flatMap(embedding -> dataService.findSimilarEmbeddings(embedding))
-        .subscribeOn(Schedulers.fromExecutor(virtualExecutor))
-        .map(Utils::appendText)
-        .map(context -> Utils.setContextForPrompt(context, query))
-        .flatMap(prompt -> client.generateQuery(prompt, role,Auth))
-        .subscribeOn(Schedulers.fromExecutor(virtualExecutor))
-        .map(Utils:: mapResponse);
+
+    @PostMapping("/query")
+    public Mono<String> query(@RequestBody String query, @RequestParam String role, @RequestHeader("Authorization") String auth) {
+          return Mono.defer(() -> client.generateEmbedding(query, auth)
+            .flatMap(embedding -> dataService.findSimilarEmbeddings(Mono.just(embedding)))
+            .subscribeOn(Schedulers.fromExecutor(virtualExecutor))
+            .map(Utils::appendText)
+            .map(context -> Utils.setContextForPrompt(context, query))
+            .flatMap(prompt -> client.generateQuery(prompt, role, auth))
+            .map(Utils::mapResponse)
+            .doOnNext(e -> log.info("mapResponse: {}", e))
+            .doOnError(e -> log.error("following exception occured: {}",e))
+        )
+        .subscribeOn(Schedulers.fromExecutor(virtualExecutor));
     }
 
     @PostMapping(value = "/query/image")

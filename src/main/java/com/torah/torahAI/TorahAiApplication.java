@@ -4,6 +4,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
@@ -18,7 +19,7 @@ public class TorahAiApplication {
     }
 
 	@Bean 
-	public ExecutorService executorService() {
+	public ExecutorService mainExecutorService() {
 		return Executors.newVirtualThreadPerTaskExecutor();
 	}
 
