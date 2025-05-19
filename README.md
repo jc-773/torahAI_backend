@@ -4,32 +4,32 @@
 
 This is the backend for my torahAI streamlit chat application
 
-Originally I built it all in python in the same proj as the UI, but I thought it would be better to be its own service
-
-
 ## Background
 
-This is a RAG application - I did not train a model or anything
+### RAG
+  - Once a valid request hits the /query endpoint 
+  - Using the OpenAI embeddings endpoint, I generate embeddings (vectors) from the query received in the streamlit chat 
+  - Using Mongo Atlas, I do a vector search with the generated vectors from step one. This will find similar vectors that I have stored in Atlas
+  - It is important to know that by using the Sefaria API (https://developers.sefaria.org/reference/getting-started), I was able to store each line of each book as a chunck in Atlas. With each chunck having its own embedding
+  - Enabling the $vectorSearch feature in Mongo Atlas, I was able to find similar embeddings to the ones generated from the chat query
+  - I take the similar embeddings and build a prompt
+  - I take the prompt and pass it to the OpenAI chat endpoint to generate a child friendly answer
 
-There is a good web service resource for receiving Jewish text (https://developers.sefaria.org/reference/getting-started)
-
-I hit the texts endpoint sefaria has, line by line book by book, then stored the result in a MongoDB Atlas collection
-
-Once stored, I created a search index doc on the collection
-
+### Other things about the backend
+  - The chat requests/responses are low latency and non-blocking, which is great. I was able to achieve a less than 2000 millisecond response by using Spring's Project Reactor event driven architecture (and a singleton virtual thread)
+  - This basically creates a chain of non-blocking reactive events that execute in the order of the RAG section explained above
 
 ## How it works
 
 (You will need an OpenAI API key)
+(As of now... /query endpoint is a POST method that requires a body with the following structure:
+  {
+    "model": "gpt-3.5-turbo",
+    "input": "book_of_genesis_related_question",
+    "encoding_format": "float"
+  })
 
-I have one POST controller/endpoint named "query"
-
-You send your Judaism-related question, statement, text, etc. to the endpoint and...
-
-  - based on the query in the request body, I generate embeddings (this allows for semantic search in Atlas) using openAI's embeddings endpoint
-  - I take those embeddings and do a vector search in Atlas, then return the results in a list
-  - loop through the list and append the semantic text that was returned
-  - generate a prompt with the appended text
-  - hit openAI's chat endpoint with the generated prompt
-  - grab the openAI generated chat response out of the response body and return it in my "query" endpoint
-  - voila!
+  - I will have a swagger doc very soon but...
+  - There are two endpoints 1. /query 2. /query/image
+  - It is recommended for clients to use the query and query image endpoints sequentially by passing the same (or related) prompt to generate images related to the query itself
+  - As of v1.0, the AI should be an expert on creating kid-friendly responses related to queries about the book of genesis
