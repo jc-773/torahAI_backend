@@ -23,6 +23,9 @@ jobs:
           java-version: '23'
 
       #quality gate
+      - name: Build maven project
+        run: ./mvnw clean package -DskipTests
+
       - name: Run Unit Tests
         run: ./mvnw test
 
