@@ -51,8 +51,7 @@ public class QueryController {
             .map(Utils::mapResponse)
             .doOnNext(e -> log.info("mapResponse: {}", e))
             .doOnError(e -> log.error("following exception occured: {}",e))
-        )
-        .subscribeOn(Schedulers.fromExecutor(virtualExecutor));
+        ).subscribeOn(Schedulers.fromExecutor(virtualExecutor));
     }
 
     @PostMapping(value = "/query/image")
