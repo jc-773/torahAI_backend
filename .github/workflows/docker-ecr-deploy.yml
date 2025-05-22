@@ -24,7 +24,7 @@ jobs:
 
       #quality gate
       - name: Run Unit Tests
-        uses: ./mvnw test
+        run: ./mvnw test
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
