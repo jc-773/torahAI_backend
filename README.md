@@ -39,8 +39,8 @@ This is the backend for my torahAI streamlit chat application
   - Right now, when a change is made to master, I have a YAML job that kicks off with the following steps:
       - checkout the repo
       - downloads jdk 23
-      - builds the proj with maven so that we can get a target file (quality gate)
-      - run the unit tests in the target file (quality gate)
+      - run the unit tests using the  maven wrapper (quality gate)
+      - if the tests pass, build the project with maven wrapper (quality gate)
       - sets up AWS credentials
       - logs into AWS ECR
       - sets the image URI with ECR repo and ECR registry
