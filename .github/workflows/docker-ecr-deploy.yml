@@ -23,11 +23,11 @@ jobs:
           java-version: '23'
 
       #quality gate
-      - name: Build maven project
-        run: ./mvnw clean package -DskipTests
-
       - name: Run Unit Tests
         run: ./mvnw test
+
+      - name: Build maven project
+        run: ./mvnw clean package -DskipTests
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
