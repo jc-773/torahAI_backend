@@ -33,3 +33,16 @@ This is the backend for my torahAI streamlit chat application
   - There are two endpoints 1. /query 2. /query/image
   - It is recommended for clients to use the query and query image endpoints sequentially by passing the same (or related) prompt to generate images related to the query itself
   - As of v1.0, the AI should be an expert on creating kid-friendly responses related to queries about the book of genesis
+
+
+## Continuous Integration
+  - Right now, when a change is made to master, I have a YAML job that kicks off with the following steps:
+      - checkout the repo
+      - downloads jdk 23
+      - builds the proj with maven so that we can get a target file (quality gate)
+      - run the unit tests in the target file (quality gate)
+      - sets up AWS credentials
+      - logs into AWS ECR
+      - sets the image URI with ECR repo and ECR registry
+      - builds the app into a docker image pointing at image URI at "." (root directory)
+      - run docker push to deploy the image to AWS ECR tagged with "latest"
