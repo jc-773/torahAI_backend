@@ -5,6 +5,7 @@
 This is the backend for my torahAI streamlit chat application
 
 ## Background
+  - Created by Jonathan Clark (github:jc-773)
 
 ### RAG
   - Once a valid request hits the /query endpoint 
