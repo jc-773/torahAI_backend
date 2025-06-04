@@ -5,8 +5,12 @@ import com.torah.torahAI.data.DataService;
 import com.torah.torahAI.data.documents.BookOfEmbeddings;
 import com.torah.torahAI.data.documents.EmbeddingResponse;
 import com.torah.torahAI.external.ExternalClientService;
+import com.torah.torahAI.model.QueryImageRequest;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
@@ -58,10 +62,13 @@ class QueryControllerTest {
         String prompt = "Create an image of a menorah";
         String role = "kid-friendly";
         String auth = "Bearer test-token";
+        QueryImageRequest query = new QueryImageRequest();
+         query.setPrompt("draw a sexy starfish");
+        query.setResponseFromCorrelatingPrompt("http://onlystar.com");
 
-        when(client.generateImageQuery(eq(prompt), eq(auth))).thenReturn(Mono.just("image-url"));
+        when(client.generateImageQueries(eq(query), eq(auth))).thenReturn(Mono.just("image-url"));
 
-        Mono<String> result = controller.queryImage(prompt, role, auth);
+        Mono<String> result = controller.queryImage(query, role, auth);
         assertNotNull(result);
     }
 }

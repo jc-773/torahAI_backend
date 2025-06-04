@@ -2,9 +2,12 @@ package com.torah.torahAI;
 
 import com.torah.torahAI.data.documents.EmbeddingResponse;
 import com.torah.torahAI.external.ExternalClientService;
+import com.torah.torahAI.model.QueryImageRequest;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -32,7 +35,10 @@ class ExternalClientServiceTest {
 
     @Test
     void generateImageQuery_shouldReturnMono() {
-        Mono<String> result = service.generateImageQuery("draw a star", "test-auth");
+        QueryImageRequest query = new QueryImageRequest();
+        query.setPrompt("draw a sexy starfish");
+        query.setResponseFromCorrelatingPrompt("http://onlystar.com");
+        Mono<String> result = service.generateImageQueries(query, "test-auth");
         assertNotNull(result);
     }
 }

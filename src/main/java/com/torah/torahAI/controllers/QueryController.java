@@ -2,7 +2,6 @@ package com.torah.torahAI.controllers;
 
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,9 +10,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.torah.torahAI.Utils;
 import com.torah.torahAI.data.DataService;
-import com.torah.torahAI.data.documents.EmbeddingResponse;
 import com.torah.torahAI.external.ExternalClientService;
+import com.torah.torahAI.model.QueryImageRequest;
 
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
@@ -55,8 +55,8 @@ public class QueryController {
     }
 
     @PostMapping(value = "/query/image")
-    public Mono<String> queryImage(@RequestBody String prompt, @RequestParam String role, @RequestHeader("Authorization") String Auth) throws InterruptedException, ExecutionException { 
-       return client.generateImageQuery(prompt, Auth)
+    public Mono<String> queryImage(@RequestBody QueryImageRequest prompt, @RequestParam String role, @RequestHeader("Authorization") String Auth) throws InterruptedException, ExecutionException { 
+       return client.generateImageQueries(prompt, Auth)
         .subscribeOn(Schedulers.fromExecutor(virtualExecutor))
         .map(Utils::mapImageResponse);
     }
