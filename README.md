@@ -8,13 +8,13 @@ This is the backend for my torahAI streamlit chat application
   - Created by Jonathan Clark (github:jc-773)
 
 ### RAG
-  - Once a valid request hits the /query endpoint 
-  - Using the OpenAI embeddings endpoint, I generate embeddings (vectors) from the query received in the streamlit chat 
-  - Using Mongo Atlas, I do a vector search with the generated vectors from step one. This will find similar vectors that I have stored in Atlas
-  - It is important to know that by using the Sefaria API (https://developers.sefaria.org/reference/getting-started), I was able to store each line of each book as a chunck in Atlas. With each chunck having its own embedding
-  - Enabling the $vectorSearch feature in Mongo Atlas, I was able to find similar embeddings to the ones generated from the chat query
-  - I take the similar embeddings and build a prompt
-  - I take the prompt and pass it to the OpenAI chat endpoint to generate a child friendly answer
+  - User submits a question through the Streamlit chat interface.
+  - The question is sent to the /query endpoint.
+  -	The app uses OpenAI’s embeddings API to convert the question into a vector (a list of numbers representing its meaning).
+  -	That vector is used to perform a vector search in MongoDB Atlas, where previously stored text chunks (from Sefaria) already have their own vectors.
+  -	The app finds the most similar chunks to the user’s question.
+  -	These matching chunks are used to build a prompt.
+  -	The prompt is sent to the OpenAI chat API to generate a child-friendly answer.
 
 ### Other things about the backend
   - The chat requests/responses are low latency and non-blocking, which is great. I was able to achieve a less than 2000 millisecond response by using Spring's Project Reactor event driven architecture (and a singleton virtual thread)
