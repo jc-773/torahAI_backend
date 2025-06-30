@@ -30,7 +30,6 @@ This is the backend for my torahAI streamlit chat application
     "encoding_format": "float"
   })
 
-  - I will have a swagger doc very soon but...
   - There are two endpoints 1. /query 2. /query/image
   - It is recommended for clients to use the query and query image endpoints sequentially by passing the same (or related) prompt to generate images related to the query itself
   - As of v1.0, the AI should be an expert on creating kid-friendly responses related to queries about the book of genesis
