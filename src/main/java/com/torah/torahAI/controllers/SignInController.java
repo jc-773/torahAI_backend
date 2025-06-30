@@ -30,12 +30,6 @@ public class SignInController {
 
     @GetMapping(value="/user/auth/signin")
     public ResponseEntity<String> getValidJwt(@RequestBody SignUp signInRequest) {
-        //check if email exist by using optional var is empty
-        //if it does exist store return val as new User
-        //use this code to map the hash to the password:  BCrypt.Result  result = BCrypt.verifyer().verify(userRequest.getPassword().toCharArray(), user.getPasswordHash());
-        //if result is not verified - invalid
-        //otherwise generate token from jwtUtils with email from request
-
         Optional<User> userOpt = userRepo.findByUsername(signInRequest.getUsername());
         if(!userOpt.isPresent()) {
             return ResponseEntity.badRequest().body("Invalid credentials");
