@@ -10,11 +10,11 @@ This is the backend for my torahAI streamlit chat application
 ### RAG
   - User submits a question through the Streamlit chat interface.
   - The question is sent to the /query endpoint.
-  -	The app uses OpenAI’s embeddings API to convert the question into a vector (a list of numbers representing its meaning).
+  -	My app uses OpenAI’s embeddings API to convert the user's question into a vector (a list of numbers representing its meaning).
   -	That vector is used to perform a vector search in MongoDB Atlas, where previously stored text chunks (from Sefaria) already have their own vectors.
   -	The app finds the most similar chunks to the user’s question.
-  -	These matching chunks are used to build a prompt.
-  -	The prompt is sent to the OpenAI chat API to generate a child-friendly answer.
+  -	These matching chunks are used to build a prompt for openAI.
+  -	The prompt is sent to the OpenAI's /chat API to generate a child-friendly answer.
 
 ### Other things about the backend
   - The chat requests/responses are low latency and non-blocking, which is great. I was able to achieve a less than 2000 millisecond response by using Spring's Project Reactor event driven architecture (and a singleton virtual thread)
