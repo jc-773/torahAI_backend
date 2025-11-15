@@ -34,7 +34,9 @@ This is the backend for my torahAI streamlit chat application
   - It is recommended for clients to use the query and query image endpoints sequentially by passing the same (or related) prompt to generate images related to the query itself
   - As of v1.0, the AI should be an expert on creating kid-friendly responses related to queries about the book of genesis
 
-
+## Next steps 
+  - The plan is to have these endpoints (/query and /query/image) from my backend available as an open-source lib for people that want to build Torah related applications with AI.
+    
 ## Continuous Integration
   - Right now, when a change is made to master, I have a YAML job that kicks off with the following steps:
       - checkout the repo
